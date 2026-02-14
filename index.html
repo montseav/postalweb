@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta de San Valentín</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Georgia', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background 0.8s ease;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body.inicial {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body.revelado {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        /* Corazones animados */
+        .corazon {
+            position: absolute;
+            font-size: 30px;
+            opacity: 0;
+            animation: flotar 6s ease-in infinite;
+            pointer-events: none;
+        }
+
+        @keyframes flotar {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Carta cerrada */
+        .carta-contenedor {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .carta {
+            background: white;
+            width: 320px;
+            height: 220px;
+            margin: 0 auto 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .sobre {
+            font-size: 60px;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+
+        .de-para {
+            color: #333;
+            font-size: 16px;
+            font-style: italic;
+            line-height: 1.6;
+        }
+
+        .de-para .de {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .de-para .para {
+            color: #c0392b;
+            font-weight: bold;
+        }
+
+        .boton-abrir {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+            font-family: 'Georgia', serif;
+        }
+
+        .boton-abrir:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+        }
+
+        .boton-abrir:active {
+            transform: translateY(-1px);
+        }
+
+        /* Mensaje revelado */
+        .mensaje-contenedor {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .mensaje-contenedor.visible {
+            display: block;
+            animation: aparecer 1s ease;
+        }
+
+        @keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        h1 {
+            color: white;
+            font-size: 42px;
+            text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+        }
+
+        .instrucciones {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 25px;
+            text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
+            padding: 0 20px;
+        }
+
+        /* Sopa de letras */
+        .sopa-contenedor {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .sopa-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 4px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .letra {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            color: #333;
+        }
+
+        .letra:hover {
+            background: #e0e0e0;
+            transform: scale(1.05);
+        }
+
+        .letra.seleccionada {
+            background: #ffeb3b;
+            border-color: #fbc02d;
+        }
+
+        .letra.encontrada {
+            background: linear-gradient(135deg, #4caf50 0%, #81c784 100%);
+            color: white;
+            border-color: #388e3c;
+        }
+
+        /* Lista de palabras */
+        .palabras-lista {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+
+        .palabra-item {
+            padding: 8px 15px;
+            background: #f44336;
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .palabra-item.encontrada {
+            background: #4caf50;
+            text-decoration: line-through;
+        }
+
+        /* Progreso */
+        .progreso {
+            color: white;
+            font-size: 18px;
+            margin-top: 15px;
+            font-weight: bold;
+            text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
+        }
+
+        /* Mensaje oculto */
+        .mensaje-oculto {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mensaje-bloqueado {
+            color: #999;
+            font-style: italic;
+            font-size: 16px;
+        }
+
+        .mensaje-revelado {
+            font-size: 24px;
+            font-weight: bold;
+            color: #c0392b;
+            line-height: 1.6;
+            animation: revelarMensaje 1s ease;
+        }
+
+        @keyframes revelarMensaje {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .completado {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+
+        .completado h2 {
+            color: #c0392b;
+            margin-bottom: 15px;
+        }
+
+        .completado p {
+            color: #333;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .oculto {
+            display: none;
+        }
+
+        .boton {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Georgia', serif;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            margin-top: 15px;
+            min-height: 45px;
+            touch-action: manipulation;
+        }
+
+        .boton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 28px;
+                padding: 0 15px;
+            }
+            
+            .instrucciones {
+                font-size: 14px;
+                padding: 0 10px;
+            }
+            
+            .sopa-contenedor {
+                padding: 15px;
+            }
+            
+            .sopa-grid {
+                gap: 2px;
+            }
+            
+            .letra {
+                font-size: 14px;
+            }
+            
+            .palabra-item {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+            
+            .mensaje-revelado {
+                font-size: 18px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 24px;
+            }
+            
+            .carta {
+                width: 280px;
+                height: 200px;
+            }
+            
+            .sobre {
+                font-size: 50px;
+            }
+            
+            .letra {
+                font-size: 12px;
+                border-width: 1px;
+            }
+            
+            .mensaje-revelado {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body class="inicial">
+
+<!-- Carta cerrada -->
+<div class="carta-contenedor" id="cartaCerrada">
+    <div class="carta">
+        <div class="sobre">💌</div>
+        <div class="de-para">
+            <div>De: <span class="de">Monchi</span></div>
+            <div>Para: <span class="para">Bryant</span></div>
+        </div>
+    </div>
+    <button class="boton-abrir" onclick="abrirCarta()">Abrir</button>
+</div>
+
+<!-- Mensaje revelado -->
+<div class="mensaje-contenedor" id="mensajeRevelado">
+    <h1>💕 Feliz día del amor y la amistad 💕</h1>
+    <p class="instrucciones">Tienes que encontrar todas las palabras en la sopa de letras. Arrastra para seleccionar las letras.</p>
+    
+    <div class="sopa-contenedor">
+        <div class="sopa-grid" id="sopaGrid"></div>
+        
+        <div class="palabras-lista" id="palabrasLista"></div>
+    </div>
+    
+    <div class="progreso" id="progreso">Palabras encontradas: 0/10</div>
+    
+    <div class="mensaje-oculto">
+        <div class="mensaje-bloqueado" id="mensajeBloqueado">
+            Tienes que completar la sopa de letras para revelar el mensaje oculto
+        </div>
+        <div class="mensaje-revelado oculto" id="mensajeRevelado2">
+            Puedes estar lejos de mis ojos, pero no de mis pensamientos, te quiero xoxo
+        </div>
+    </div>
+    
+    <div class="completado oculto" id="mensajeCompletado">
+        <h2> ¡YEIII lo lograste! </h2>
+        <p>Revelaste el mensaje oculto </p>
+    </div>
+    
+    <button class="boton" onclick="revelarTodo()">Revelar todas las palabras</button>
+</div>
+
+<script>
+    const GRID_SIZE = 12;
+    
+    // Palabras a encontrar en la sopa de letras
+    const palabras = [
+        { palabra: "AMOR", direccion: "horizontal" },
+        { palabra: "CORAZON", direccion: "horizontal" },
+        { palabra: "BESOS", direccion: "vertical" },
+        { palabra: "DISTANCIA", direccion: "horizontal" },
+        { palabra: "PENSAR", direccion: "vertical" },
+        { palabra: "OJOS", direccion: "horizontal" },
+        { palabra: "SENTIR", direccion: "vertical" },
+        { palabra: "LEJOS", direccion: "horizontal" },
+        { palabra: "CARIÑO", direccion: "vertical" },
+        { palabra: "JUNTOS", direccion: "horizontal" }
+    ];
+    
+    let grid = [];
+    let palabrasEncontradas = new Set();
+    let seleccionando = false;
+    let celdaInicio = null;
+    let seleccionActual = [];
+    
+    function abrirCarta() {
+        document.getElementById('cartaCerrada').classList.add('oculto');
+        document.body.classList.remove('inicial');
+        document.body.classList.add('revelado');
+        document.getElementById('mensajeRevelado').classList.add('visible');
+        
+        crearCorazones();
+        crearSopaDeLetras();
+        crearListaPalabras();
+        actualizarProgreso();
+    }
+    
+    function crearCorazones() {
+        const corazones = ['❤️', '💕', '💖', '💗', '💓', '💝'];
+        
+        setInterval(() => {
+            const corazon = document.createElement('div');
+            corazon.classList.add('corazon');
+            corazon.textContent = corazones[Math.floor(Math.random() * corazones.length)];
+            corazon.style.left = Math.random() * 100 + 'vw';
+            corazon.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            corazon.style.fontSize = (Math.random() * 20 + 20) + 'px';
+            
+            document.body.appendChild(corazon);
+            
+            setTimeout(() => {
+                corazon.remove();
+            }, 6000);
+        }, 300);
+    }
+    
+    function crearSopaDeLetras() {
+        // Inicializar grid vacío
+        grid = Array(GRID_SIZE).fill(null).map(() => 
+            Array(GRID_SIZE).fill(null).map(() => ({ letra: '', palabra: null, index: -1 }))
+        );
+        
+        // Colocar palabras
+        palabras.forEach((item, idx) => {
+            colocarPalabra(item.palabra, item.direccion, idx);
+        });
+        
+        // Rellenar espacios vacíos con letras aleatorias
+        const letrasAleatorias = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for (let i = 0; i < GRID_SIZE; i++) {
+            for (let j = 0; j < GRID_SIZE; j++) {
+                if (!grid[i][j].letra) {
+                    grid[i][j].letra = letrasAleatorias[Math.floor(Math.random() * letrasAleatorias.length)];
+                }
+            }
+        }
+        
+        // Renderizar grid
+        const sopaGrid = document.getElementById('sopaGrid');
+        sopaGrid.innerHTML = '';
+        
+        grid.forEach((fila, i) => {
+            fila.forEach((celda, j) => {
+                const div = document.createElement('div');
+                div.classList.add('letra');
+                div.textContent = celda.letra;
+                div.dataset.row = i;
+                div.dataset.col = j;
+                
+                div.addEventListener('mousedown', iniciarSeleccion);
+                div.addEventListener('mouseenter', continuarSeleccion);
+                div.addEventListener('mouseup', finalizarSeleccion);
+                div.addEventListener('touchstart', iniciarSeleccionTouch);
+                div.addEventListener('touchmove', continuarSeleccionTouch);
+                div.addEventListener('touchend', finalizarSeleccion);
+                
+                sopaGrid.appendChild(div);
+            });
+        });
+    }
+    
+    function colocarPalabra(palabra, direccion, palabraIdx) {
+        let colocada = false;
+        let intentos = 0;
+        const maxIntentos = 100;
+        
+        while (!colocada && intentos < maxIntentos) {
+            const fila = Math.floor(Math.random() * GRID_SIZE);
+            const col = Math.floor(Math.random() * GRID_SIZE);
+            
+            if (puedeColocar(palabra, fila, col, direccion)) {
+                for (let i = 0; i < palabra.length; i++) {
+                    if (direccion === 'horizontal') {
+                        grid[fila][col + i] = { 
+                            letra: palabra[i], 
+                            palabra: palabraIdx,
+                            index: i
+                        };
+                    } else {
+                        grid[fila + i][col] = { 
+                            letra: palabra[i], 
+                            palabra: palabraIdx,
+                            index: i
+                        };
+                    }
+                }
+                colocada = true;
+            }
+            intentos++;
+        }
+    }
+    
+    function puedeColocar(palabra, fila, col, direccion) {
+        if (direccion === 'horizontal') {
+            if (col + palabra.length > GRID_SIZE) return false;
+            for (let i = 0; i < palabra.length; i++) {
+                if (grid[fila][col + i].letra && grid[fila][col + i].letra !== palabra[i]) {
+                    return false;
+                }
+            }
+        } else {
+            if (fila + palabra.length > GRID_SIZE) return false;
+            for (let i = 0; i < palabra.length; i++) {
+                if (grid[fila + i][col].letra && grid[fila + i][col].letra !== palabra[i]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    function crearListaPalabras() {
+        const lista = document.getElementById('palabrasLista');
+        palabras.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.classList.add('palabra-item');
+            div.textContent = item.palabra;
+            div.dataset.palabraIdx = idx;
+            lista.appendChild(div);
+        });
+    }
+    
+    function iniciarSeleccion(e) {
+        e.preventDefault();
+        seleccionando = true;
+        const row = parseInt(e.target.dataset.row);
+        const col = parseInt(e.target.dataset.col);
+        celdaInicio = { row, col };
+        seleccionActual = [{ row, col }];
+        e.target.classList.add('seleccionada');
+    }
+    
+    function iniciarSeleccionTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const elemento = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (elemento && elemento.classList.contains('letra')) {
+            seleccionando = true;
+            const row = parseInt(elemento.dataset.row);
+            const col = parseInt(elemento.dataset.col);
+            celdaInicio = { row, col };
+            seleccionActual = [{ row, col }];
+            elemento.classList.add('seleccionada');
+        }
+    }
+    
+    function continuarSeleccion(e) {
+        if (!seleccionando) return;
+        e.preventDefault();
+        const row = parseInt(e.target.dataset.row);
+        const col = parseInt(e.target.dataset.col);
+        
+        // Limpiar selección anterior
+        document.querySelectorAll('.letra.seleccionada').forEach(el => {
+            if (!el.classList.contains('encontrada')) {
+                el.classList.remove('seleccionada');
+            }
+        });
+        
+        // Crear nueva selección en línea
+        seleccionActual = obtenerCeldasEnLinea(celdaInicio, { row, col });
+        seleccionActual.forEach(celda => {
+            const elemento = document.querySelector(`[data-row="${celda.row}"][data-col="${celda.col}"]`);
+            if (elemento && !elemento.classList.contains('encontrada')) {
+                elemento.classList.add('seleccionada');
+            }
+        });
+    }
+    
+    function continuarSeleccionTouch(e) {
+        if (!seleccionando) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const elemento = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (elemento && elemento.classList.contains('letra')) {
+            continuarSeleccion({ target: elemento });
+        }
+    }
+    
+    function obtenerCeldasEnLinea(inicio, fin) {
+        const celdas = [];
+        const difRow = fin.row - inicio.row;
+        const difCol = fin.col - inicio.col;
+        
+        if (difRow === 0) {
+            // Horizontal
+            const minCol = Math.min(inicio.col, fin.col);
+            const maxCol = Math.max(inicio.col, fin.col);
+            for (let col = minCol; col <= maxCol; col++) {
+                celdas.push({ row: inicio.row, col });
+            }
+        } else if (difCol === 0) {
+            // Vertical
+            const minRow = Math.min(inicio.row, fin.row);
+            const maxRow = Math.max(inicio.row, fin.row);
+            for (let row = minRow; row <= maxRow; row++) {
+                celdas.push({ row, col: inicio.col });
+            }
+        } else {
+            // Solo devolver inicio si no es línea recta
+            celdas.push(inicio);
+        }
+        
+        return celdas;
+    }
+    
+    function finalizarSeleccion() {
+        if (!seleccionando) return;
+        seleccionando = false;
+        
+        verificarPalabra();
+        
+        // Limpiar selección
+        document.querySelectorAll('.letra.seleccionada').forEach(el => {
+            if (!el.classList.contains('encontrada')) {
+                el.classList.remove('seleccionada');
+            }
+        });
+    }
+    
+    function verificarPalabra() {
+        if (seleccionActual.length < 2) return;
+        
+        const palabraSeleccionada = seleccionActual.map(celda => 
+            grid[celda.row][celda.col].letra
+        ).join('');
+        
+        const palabraReversa = palabraSeleccionada.split('').reverse().join('');
+        
+        palabras.forEach((item, idx) => {
+            if ((palabraSeleccionada === item.palabra || palabraReversa === item.palabra) 
+                && !palabrasEncontradas.has(idx)) {
+                marcarPalabraEncontrada(idx);
+            }
+        });
+    }
+    
+    function marcarPalabraEncontrada(palabraIdx) {
+        palabrasEncontradas.add(palabraIdx);
+        
+        // Marcar en la lista
+        const palabraItem = document.querySelector(`[data-palabra-idx="${palabraIdx}"]`);
+        if (palabraItem) {
+            palabraItem.classList.add('encontrada');
+        }
+        
+        // Marcar en el grid
+        seleccionActual.forEach(celda => {
+            const elemento = document.querySelector(`[data-row="${celda.row}"][data-col="${celda.col}"]`);
+            if (elemento) {
+                elemento.classList.add('encontrada');
+                elemento.classList.remove('seleccionada');
+            }
+        });
+        
+        actualizarProgreso();
+        
+        // Verificar si completó todo
+        if (palabrasEncontradas.size === palabras.length) {
+            revelarMensaje();
+        }
+    }
+    
+    function actualizarProgreso() {
+        document.getElementById('progreso').textContent = 
+            `Palabras encontradas: ${palabrasEncontradas.size}/${palabras.length}`;
+    }
+    
+    function revelarMensaje() {
+        document.getElementById('mensajeBloqueado').classList.add('oculto');
+        document.getElementById('mensajeRevelado2').classList.remove('oculto');
+        
+        setTimeout(() => {
+            document.getElementById('mensajeCompletado').classList.remove('oculto');
+        }, 1000);
+    }
+    
+    function revelarTodo() {
+        if (confirm('¿Estás seguro? Esto revelará todas las palabras.')) {
+            palabras.forEach((item, idx) => {
+                if (!palabrasEncontradas.has(idx)) {
+                    palabrasEncontradas.add(idx);
+                    
+                    const palabraItem = document.querySelector(`[data-palabra-idx="${idx}"]`);
+                    if (palabraItem) {
+                        palabraItem.classList.add('encontrada');
+                    }
+                }
+            });
+            
+            // Marcar todas las celdas con palabras
+            grid.forEach((fila, i) => {
+                fila.forEach((celda, j) => {
+                    if (celda.palabra !== null) {
+                        const elemento = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+                        if (elemento) {
+                            elemento.classList.add('encontrada');
+                        }
+                    }
+                });
+            });
+            
+            actualizarProgreso();
+            revelarMensaje();
+        }
+    }
+    
+    // Prevenir scroll en móvil durante selección
+    document.addEventListener('touchmove', (e) => {
+        if (seleccionando) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // Asegurar que la selección termine incluso si el mouse sale del grid
+    document.addEventListener('mouseup', () => {
+        if (seleccionando) {
+            finalizarSeleccion();
+        }
+    });
+</script>
+
+</body>
+</html>
